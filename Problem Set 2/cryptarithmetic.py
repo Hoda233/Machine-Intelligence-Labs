@@ -52,6 +52,294 @@ class CryptArithmeticProblem(Problem):
         problem.variables = []
         problem.domains = {}
         problem.constraints = []
+        
+        # variables 
+        all_chars = LHS0 + LHS1 + RHS
+        unique_chars = set()
+        for char in all_chars:
+            unique_chars.add(char)
+
+        unique_chars = list(unique_chars)
+
+        # carries
+        
+        no_of_carries = len(RHS) - 1
+        
+        carries = []
+        for i in range(no_of_carries):
+            # var = chr(ord('a')+i)
+            var = 'C'+str(i)
+            carries.append(var)
+
+        problem.variables = unique_chars + carries
+        # print(problem.variables)
+
+        # domains 
+        last_digits = set()
+        last_digits.add(LHS0[0])
+        last_digits.add(LHS1[0])
+        last_digits.add(RHS[0])
+
+        for var in unique_chars:
+            if var in last_digits:
+                problem.domains[var] = set(range(1, 10))
+            else:
+                problem.domains[var] = set(range(0, 10))
+
+        for c in carries:
+            problem.domains[c] = set(range(0, 2))
+        
+        # print(problem.domains)
+
+        # constraints 
+        
+        # all different constraint
+        for v1 in unique_chars:
+            for v2 in unique_chars:
+                if v1 is not v2:
+                    binary_constraint = BinaryConstraint((v1,v2), lambda value1, value2:  value1 != value2)
+                    problem.constraints.append(binary_constraint)
+        
+
+        LHS0_rev = LHS0[::-1]
+        LHS1_rev = LHS1[::-1]
+        RHS_rev = RHS[::-1]
+
+        min_length = min(len(LHS0), len(LHS1))
+        max_length = max(len(LHS0), len(LHS1))
+        l0_length, l1_length, r_length = len(LHS0), len(LHS1), len(RHS)
+        
+
+        for i in range(r_length): 
+            if i == 0:
+                # A + B = C + 10 C1
+
+                aux1 = (LHS0_rev[i], LHS1_rev[i])
+                aux2 = (RHS_rev[i], carries[i])
+
+                problem.variables.append(aux1)
+                problem.variables.append(aux2) 
+
+                dom=set()
+                for x in problem.domains[LHS0_rev[i]]:
+                    for y in problem.domains[LHS1_rev[i]]:
+                        dom.add((x,y))
+                problem.domains[aux1] = dom
+
+                dom=set()
+                for x in problem.domains[RHS_rev[i]]:
+                    for y in problem.domains[carries[i]]:
+                        dom.add((x,y))
+                problem.domains[aux2] = dom
+                
+                binary_constraint = BinaryConstraint((LHS0_rev[i],aux1), lambda a, b: a == b[0])
+                problem.constraints.append(binary_constraint)
+
+                binary_constraint = BinaryConstraint((LHS1_rev[i],aux1), lambda a, b: a == b[1])
+                problem.constraints.append(binary_constraint)
+                
+                print(RHS_rev[i],aux2,aux2[0],aux2[1])
+                binary_constraint = BinaryConstraint((RHS_rev[i],aux2), lambda a, b: a == b[0])
+                problem.constraints.append(binary_constraint)
+
+                binary_constraint = BinaryConstraint((carries[i],aux2), lambda a, b: a == b[1])
+                problem.constraints.append(binary_constraint)
+
+                binary_constraint = BinaryConstraint((aux1,aux2), lambda a, b: a[0] + a[1]  == b[0] + 10 * b[1])
+                problem.constraints.append(binary_constraint)
+
+                
+            
+            elif i == r_length - 1:
+
+                if i < l0_length and i < l1_length:
+                    # A + B + C1 = C 
+                    aux1 = (LHS0_rev[i], LHS1_rev[i], carries[i - 1])
+                    
+                    problem.variables.append(aux1) 
+
+                    dom=set()
+                    for x in problem.domains[LHS0_rev[i]]:
+                        for y in problem.domains[LHS1_rev[i]]:
+                            for z in problem.domains[carries[i - 1]]:
+                                    dom.add((x,y,z))
+                    problem.domains[aux1] = dom
+                    
+                    binary_constraint = BinaryConstraint((LHS0_rev[i],aux1), lambda a, b: a == b[0])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((LHS1_rev[i],aux1), lambda a, b: a == b[1])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((carries[i-1],aux1), lambda a, b: a == b[2])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((aux1,RHS_rev[i]), lambda a, b: a[0] + a[1] + a[2] == b)
+                    problem.constraints.append(binary_constraint)
+
+                    
+
+                elif i < l0_length and i>=l1_length:
+                    # C1 + A     = C
+
+                    aux1 = (LHS0_rev[i], carries[i - 1])
+                    
+                    problem.variables.append(aux1) 
+
+                    dom=set()
+                    for x in problem.domains[LHS0_rev[i]]:
+                        for y in problem.domains[carries[i-1]]:
+                                    dom.add((x,y))
+                    problem.domains[aux1] = dom
+                    
+                    binary_constraint = BinaryConstraint((LHS0_rev[i],aux1), lambda a, b: a == b[0])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((carries[i-1],aux1), lambda a, b: a == b[1])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((aux1,RHS_rev[i]), lambda a, b: a[0] + a[1] == b)
+                    problem.constraints.append(binary_constraint)
+
+                    
+
+                elif i >= l0_length and i<l1_length:
+                    # C1 + B     = C
+
+                    aux1 = (LHS1_rev[i], carries[i - 1])
+                    
+                    problem.variables.append(aux1) 
+
+                    dom=set()
+                    for x in problem.domains[LHS1_rev[i]]:
+                        for y in problem.domains[carries[i-1]]:
+                                    dom.add((x,y))
+                    problem.domains[aux1] = dom
+                    
+                    binary_constraint = BinaryConstraint((LHS1_rev[i],aux1), lambda a, b: a == b[0])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((carries[i-1],aux1), lambda a, b: a == b[1])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((aux1,RHS_rev[i]), lambda a, b: a[0] + a[1] + a[2] == b)
+                    problem.constraints.append(binary_constraint)
+
+                    
+
+                elif i >= l0_length and i >= l1_length:
+                    # C1 = C
+                    binary_constraint = BinaryConstraint((carries[i-1],RHS_rev[i]), lambda a, b: a == b)
+                    problem.constraints.append(binary_constraint)
+
+                    
+            
+            else: 
+                if i < l0_length and i < l1_length:
+                    # A + B + C1 = C + 10 C2
+                    aux1 = (LHS0_rev[i], LHS1_rev[i], carries[i - 1])
+                    aux2 = (RHS_rev[i], carries[i])
+
+                    problem.variables.append(aux1) 
+                    problem.variables.append(aux2) 
+
+                    dom=set()
+                    for x in problem.domains[LHS0_rev[i]]:
+                        for y in problem.domains[LHS1_rev[i]]:
+                            for z in problem.domains[carries[i - 1]]:
+                                dom.add((x,y,z))
+                    problem.domains[aux1] = dom
+
+                    dom=set()
+                    for x in problem.domains[RHS_rev[i]]:
+                        for y in problem.domains[carries[i]]:
+                            dom.add((x,y))
+                    problem.domains[aux2] = dom
+
+
+                    binary_constraint = BinaryConstraint((LHS0_rev[i],aux1), lambda a, b: a == b[0])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((LHS1_rev[i],aux1), lambda a, b: a == b[1])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((carries[i-1],aux1), lambda a, b: a == b[2])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((RHS_rev[i],aux2), lambda a, b: a  == b[0])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((carries[i],aux2), lambda a, b: a  == b[1])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((aux1,aux2), lambda a, b: a[0] + a[1] + a[2] == b[0] + 10 * b[1])
+                    problem.constraints.append(binary_constraint)
+                
+                else:
+                    if i < l0_length and i>=l1_length:
+                        # A + C1     = C + 10 C2
+                        aux1 = (LHS0_rev[i] , carries[i - 1])
+                        aux2 = (RHS_rev[i] , carries[i])
+
+                        problem.variables.append(aux1)
+                        problem.variables.append(aux2) 
+
+                        dom=set()
+                        for x in problem.domains[LHS0_rev[i]]:
+                            for y in problem.domains[carries[i-1]]:
+                                dom.add((x,y))
+                        problem.domains[aux1] = dom
+
+                        dom=set()
+                        for x in problem.domains[RHS_rev[i]]:
+                            for y in problem.domains[carries[i]]:
+                                dom.add((x,y))
+                        problem.domains[aux2] = dom
+
+                        binary_constraint = BinaryConstraint((LHS0_rev[i],aux1), lambda a, b: a == b[0])
+                        problem.constraints.append(binary_constraint)
+
+                        
+
+                    elif i >= l0_length and i<l1_length:
+                        # B + C1     = C + 10 C2
+                        aux1 = (LHS1_rev[i] , carries[i - 1])
+                        aux2 = (RHS_rev[i] , carries[i])
+
+                        problem.variables.append(aux1)
+                        problem.variables.append(aux2) 
+
+                        dom=set()
+                        for x in problem.domains[LHS1_rev[i]]:
+                            for y in problem.domains[carries[i-1]]:
+                                dom.add((x,y))
+                        problem.domains[aux1] = dom
+
+                        dom=set()
+                        for x in problem.domains[RHS_rev[i]]:
+                            for y in problem.domains[carries[i]]:
+                                dom.add((x,y))
+                        problem.domains[aux2] = dom
+
+
+                        binary_constraint = BinaryConstraint((LHS1_rev[i],aux1), lambda a, b: a == b[0])
+                        problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((carries[i - 1],aux1), lambda a, b: a == b[1])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((RHS_rev[i],aux2), lambda a, b: a == b[0])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((carries[i],aux2), lambda a, b: a == b[1])
+                    problem.constraints.append(binary_constraint)
+
+                    binary_constraint = BinaryConstraint((aux1,aux2), lambda a, b: a[0] + a[1]  == b[0] + 10 * b[1])
+                    problem.constraints.append(binary_constraint)
+
+                    
+    
+
         return problem
 
     # Read a cryptarithmetic puzzle from a file
@@ -59,3 +347,5 @@ class CryptArithmeticProblem(Problem):
     def from_file(path: str) -> "CryptArithmeticProblem":
         with open(path, 'r') as f:
             return CryptArithmeticProblem.from_text(f.read())
+
+

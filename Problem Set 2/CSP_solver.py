@@ -43,7 +43,25 @@ def minimum_remaining_values(problem: Problem, domains: Dict[str, set]) -> str:
 #            since they contain the current domains of unassigned variables only.
 def forward_checking(problem: Problem, assigned_variable: str, assigned_value: Any, domains: Dict[str, set]) -> bool:
     #TODO: Write this function
-    NotImplemented()
+    # NotImplemented()
+
+    for constraint in problem.constraints:
+        if isinstance(constraint, BinaryConstraint):
+            if assigned_variable in constraint.variables:
+                other_variable = constraint.get_other(assigned_variable)
+                if other_variable not in domains:
+                    continue
+
+                new_domain = set()
+                for value in domains[other_variable]:
+                    if constraint.is_satisfied({other_variable: value, assigned_variable: assigned_value}):
+                        new_domain.add(value)
+                
+                if not new_domain:
+                    return False
+                
+                domains[other_variable] = new_domain
+    return True
 
 # This function should return the domain of the given variable order based on the "least restraining value" heuristic.
 # IMPORTANT: This function should not modify any of the given arguments.
@@ -57,8 +75,30 @@ def forward_checking(problem: Problem, assigned_variable: str, assigned_value: A
 #            since they contain the current domains of unassigned variables only.
 def least_restraining_values(problem: Problem, variable_to_assign: str, domains: Dict[str, set]) -> List[Any]:
     #TODO: Write this function
-    NotImplemented()
+    # NotImplemented()
 
+    # least_restraining_values means least value not satisfied with others 
+    unsatisfied_values = {}
+
+    for value_to_assign in domains[variable_to_assign]:
+
+        unsatisfied_values[value_to_assign] = 0
+
+        for constraint in problem.constraints:
+            if isinstance(constraint, BinaryConstraint):
+                if variable_to_assign in constraint.variables:
+                    other_variable = constraint.get_other(variable_to_assign)
+                    if other_variable not in domains:
+                        continue
+                    
+                    for value in domains[other_variable]:
+                        if not constraint.is_satisfied({other_variable: value, variable_to_assign: value_to_assign}):
+                            unsatisfied_values[value_to_assign] += 1
+
+    # if same value, sort based on their key 
+    return sorted(unsatisfied_values, key = lambda x: (unsatisfied_values[x], x))
+
+                    
 # This function should solve CSP problems using backtracking search with forward checking.
 # The variable ordering should be decided by the MRV heuristic.
 # The value ordering should be decided by the "least restraining value" heurisitc.
@@ -68,7 +108,35 @@ def least_restraining_values(problem: Problem, variable_to_assign: str, domains:
 # IMPORTANT: To get the correct result for the explored nodes, you should check if the assignment is complete only once using "problem.is_complete"
 #            for every assignment including the initial empty assignment, EXCEPT for the assignments pruned by the forward checking.
 #            Also, if 1-Consistency deems the whole problem unsolvable, you shouldn't call "problem.is_complete" at all.
+
 def solve(problem: Problem) -> Optional[Assignment]:
     #TODO: Write this function
-    NotImplemented()
+    # NotImplemented()
+
+    if not one_consistency(problem):
+        return None
+        
+    def recursive_search(assignment: Assignment, domains: Dict[str, set])-> Optional[Assignment]:
     
+        if problem.is_complete(assignment):
+            return assignment
+        
+        variable = minimum_remaining_values(problem,domains)
+
+        for value in least_restraining_values(problem, variable, domains):
+            
+            new_assignment = assignment.copy()
+            new_assignment [variable] = value
+            
+            new_domain = domains.copy()
+            del new_domain[variable]
+
+            if forward_checking(problem, variable, value, new_domain):
+                result = recursive_search(new_assignment, new_domain)
+            
+                if result is not None:
+                    return result
+                
+        return None
+    
+    return recursive_search({} ,problem.domains)

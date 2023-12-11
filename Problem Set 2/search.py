@@ -1,3 +1,4 @@
+import math
 from typing import Tuple
 from game import HeuristicFunction, Game, S, A
 from helpers.utils import NotImplemented
@@ -30,23 +31,239 @@ def greedy(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: 
 # get values[0].
 def minimax(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1) -> Tuple[float, A]:
     #TODO: Complete this function
-    NotImplemented()
+    # NotImplemented()
+    
+    start_agent = game.get_turn(state)
+
+    def get_value(state,depth):
+
+        terminal, values = game.is_terminal(state)
+
+        if terminal:
+            return values[start_agent], None
+        
+        if depth == max_depth:
+            return heuristic(game, state, start_agent), None
+        
+        agent = game.get_turn(state)
+        if agent == 0:
+            return max_value(state, depth)
+        else:
+            return min_value(state, depth)
+        
+
+    def min_value(state, depth):
+
+        v_min = math.inf
+        correct_action = None
+        actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
+
+        for action , state in actions_states:
+            successor_value = get_value(state, depth + 1)[0]
+            if successor_value <= v_min: 
+                v_min = successor_value 
+                correct_action = action
+                
+        return v_min , correct_action
+
+    def max_value(state, depth):
+
+        v_max = -math.inf
+        correct_action = None
+        actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
+
+        for action , state in actions_states:
+            successor_value = get_value(state, depth + 1)[0]
+            if successor_value > v_max: 
+                v_max = successor_value 
+                correct_action = action
+
+        return v_max , correct_action
+    
+    return get_value(state, 0)
+
 
 # Apply Alpha Beta pruning and return the tree value and the best action
 # Hint: Read the hint for minimax.
 def alphabeta(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1) -> Tuple[float, A]:
     #TODO: Complete this function
-    NotImplemented()
+    # NotImplemented()
+
+    start_agent = game.get_turn(state)
+
+    def get_value(state, depth, alpha, beta):
+
+        terminal, values = game.is_terminal(state)
+
+        if terminal:
+            return values[start_agent], None
+        
+        if depth == max_depth:
+            return heuristic(game, state, start_agent), None
+        
+        agent = game.get_turn(state)
+        if agent == 0:
+            return max_value(state, depth, alpha, beta)
+        else:
+            return min_value(state, depth, alpha, beta)
+        
+
+    def min_value(state, depth, alpha, beta):
+
+        v_min = math.inf
+        correct_action = None
+        actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
+
+        for action , state in actions_states:
+            successor_value = get_value(state, depth + 1, alpha, beta)[0]
+            if successor_value <= v_min: 
+                v_min = successor_value 
+                correct_action = action
+
+            if v_min <= alpha: 
+                return v_min , correct_action
+
+            beta = min(beta, v_min)
+                
+        return v_min , correct_action
+
+    def max_value(state, depth, alpha, beta):
+
+        v_max = -math.inf
+        correct_action = None
+        actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
+
+        for action , state in actions_states:
+            successor_value = get_value(state, depth + 1, alpha, beta)[0]
+            if successor_value > v_max: 
+                v_max = successor_value 
+                correct_action = action
+
+            if v_max >= beta: 
+                return v_max , correct_action
+            
+            alpha = max(alpha, v_max)
+
+        return v_max , correct_action
+    
+    return get_value(state, 0, -math.inf, math.inf)
 
 # Apply Alpha Beta pruning with move ordering and return the tree value and the best action
 # Hint: Read the hint for minimax.
 def alphabeta_with_move_ordering(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1) -> Tuple[float, A]:
     #TODO: Complete this function
-    NotImplemented()
+    # NotImplemented()
+
+    start_agent = game.get_turn(state)
+
+    def get_value(state, depth, alpha, beta):
+
+        terminal, values = game.is_terminal(state)
+
+        if terminal:
+            return values[start_agent], None
+        
+        if depth == max_depth:
+            return heuristic(game, state, start_agent), None
+        
+        agent = game.get_turn(state)
+        if agent == 0:
+            return max_value(state, depth, alpha, beta)
+        else:
+            return min_value(state, depth, alpha, beta)
+        
+
+    def min_value(state, depth, alpha, beta):
+
+        v_min = math.inf
+        correct_action = None
+        actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
+        actions_states.sort(key = lambda x: heuristic(game, x[1], 0))
+
+        for action , state in actions_states:
+            successor_value = get_value(state, depth + 1, alpha, beta)[0]
+            if successor_value <= v_min: 
+                v_min = successor_value 
+                correct_action = action
+
+            if v_min <= alpha: 
+                return v_min , correct_action
+
+            beta = min(beta, v_min)
+                
+        return v_min , correct_action
+
+    def max_value(state, depth, alpha, beta):
+
+        v_max = -math.inf
+        correct_action = None
+        actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
+        actions_states.sort(key = lambda x: heuristic(game, x[1], 0), reverse=True)
+
+
+        for action , state in actions_states:
+            successor_value = get_value(state, depth + 1, alpha, beta)[0]
+            if successor_value > v_max: 
+                v_max = successor_value 
+                correct_action = action
+
+            if v_max >= beta: 
+                return v_max , correct_action
+            
+            alpha = max(alpha, v_max)
+
+        return v_max , correct_action
+    
+    return get_value(state, 0, -math.inf, math.inf)
 
 # Apply Expectimax search and return the tree value and the best action
 # Hint: Read the hint for minimax, but note that the monsters (turn > 0) do not act as min nodes anymore,
 # they now act as chance nodes (they act randomly).
 def expectimax(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1) -> Tuple[float, A]:
     #TODO: Complete this function
-    NotImplemented()
+    # NotImplemented()
+
+    start_agent = game.get_turn(state)
+
+    def get_value(state, depth):
+
+        terminal, values = game.is_terminal(state)
+
+        if terminal:
+            return values[start_agent], None
+        
+        if depth == max_depth:
+            return heuristic(game, state, start_agent), None
+        
+        agent = game.get_turn(state)
+        if agent == 0:
+            return max_value(state, depth)
+        else:
+            return expected_value(state, depth)
+        
+    def expected_value(state, depth):
+
+        v_exp = 0
+        actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
+
+        for _ , state in actions_states:
+            successor_value = get_value(state, depth + 1)[0]
+            v_exp += successor_value
+        return v_exp/len(actions_states), None
+
+
+    def max_value(state, depth):
+
+        v_max = -math.inf
+        correct_action = None
+        actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
+
+        for action , state in actions_states:
+            successor_value = get_value(state, depth + 1)[0]
+            if successor_value > v_max: 
+                v_max = successor_value 
+                correct_action = action
+
+        return v_max , correct_action
+    
+    return get_value(state, 0)
