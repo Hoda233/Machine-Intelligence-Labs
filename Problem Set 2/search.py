@@ -33,19 +33,24 @@ def minimax(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth:
     #TODO: Complete this function
     # NotImplemented()
     
+    # get the turn of the player to start the game
     start_agent = game.get_turn(state)
 
     def get_value(state,depth):
-
+        
+        # check if this is a terminal state, end the game and return the value of the utility 
         terminal, values = game.is_terminal(state)
-
         if terminal:
             return values[start_agent], None
         
+        # if it is in the maximum depth, return the heuristic value
         if depth == max_depth:
             return heuristic(game, state, start_agent), None
         
+        # get the current player turn 
         agent = game.get_turn(state)
+
+        # if the turn is 0, then it is a max node
         if agent == 0:
             return max_value(state, depth)
         else:
@@ -53,32 +58,46 @@ def minimax(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth:
         
 
     def min_value(state, depth):
-
+        
+        # initiate the min value with positive infinity
         v_min = math.inf
-        correct_action = None
+
+        # initiate the action to take
+        taken_action = None
+
+        # get possible actions and states of the successors for each possible action for the current state
         actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
 
+        # for each action of the successors, get the value of the successor
         for action , state in actions_states:
             successor_value = get_value(state, depth + 1)[0]
+            # if the successor_value less or equal than min value, update the min value and the action to take
             if successor_value <= v_min: 
                 v_min = successor_value 
-                correct_action = action
+                taken_action = action
                 
-        return v_min , correct_action
+        return v_min , taken_action
 
     def max_value(state, depth):
 
+        # initiate the max value with negative infinity
         v_max = -math.inf
-        correct_action = None
+
+        # initiate the action to take
+        taken_action = None
+
+        # get possible actions and states of the successors for each possible action for the current state
         actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
 
+        # for each action of the successors, get the value of the successor
         for action , state in actions_states:
             successor_value = get_value(state, depth + 1)[0]
+            # if the successor_value more than min value, update the min value and the action to take
             if successor_value > v_max: 
                 v_max = successor_value 
-                correct_action = action
+                taken_action = action
 
-        return v_max , correct_action
+        return v_max , taken_action
     
     return get_value(state, 0)
 
@@ -89,19 +108,24 @@ def alphabeta(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_dept
     #TODO: Complete this function
     # NotImplemented()
 
+    # get the turn of the player to start the game
     start_agent = game.get_turn(state)
 
     def get_value(state, depth, alpha, beta):
 
+        # check if this is a terminal state, end the game and return the value of the utility 
         terminal, values = game.is_terminal(state)
-
         if terminal:
             return values[start_agent], None
-        
+
+        # if it is in the maximum depth, return the heuristic value
         if depth == max_depth:
             return heuristic(game, state, start_agent), None
-        
+
+        # get the current player turn 
         agent = game.get_turn(state)
+
+        # if the turn is 0, then it is a max node
         if agent == 0:
             return max_value(state, depth, alpha, beta)
         else:
@@ -110,41 +134,59 @@ def alphabeta(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_dept
 
     def min_value(state, depth, alpha, beta):
 
+        # initiate the min value with positive infinity
         v_min = math.inf
-        correct_action = None
+
+        # initiate the action to take
+        taken_action = None
+
+        # get possible actions and states of the successors for each possible action for the current state
         actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
 
+        # for each action of the successors, get the value of the successor
         for action , state in actions_states:
             successor_value = get_value(state, depth + 1, alpha, beta)[0]
+            # if the successor_value less or equal than min value, update the min value and the action to take            
             if successor_value <= v_min: 
                 v_min = successor_value 
-                correct_action = action
+                taken_action = action
 
+            # pruning check: if min value less or equal alpha, then prune the branch
             if v_min <= alpha: 
-                return v_min , correct_action
+                return v_min , taken_action
 
+            # if not so update the beta
             beta = min(beta, v_min)
                 
-        return v_min , correct_action
+        return v_min , taken_action
 
     def max_value(state, depth, alpha, beta):
 
+        # initiate the max value with negative infinity
         v_max = -math.inf
-        correct_action = None
+
+        # initiate the action to take
+        taken_action = None
+
+        # get possible actions and states of the successors for each possible action for the current state
         actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
 
+        # for each action of the successors, get the value of the successor
         for action , state in actions_states:
             successor_value = get_value(state, depth + 1, alpha, beta)[0]
+            # if the successor_value more than min value, update the min value and the action to take
             if successor_value > v_max: 
                 v_max = successor_value 
-                correct_action = action
-
+                taken_action = action
+                        
+            # pruning check: if max value more or equal than beta, then prune the branch
             if v_max >= beta: 
-                return v_max , correct_action
+                return v_max , taken_action
             
+            # if not so update the alpha
             alpha = max(alpha, v_max)
 
-        return v_max , correct_action
+        return v_max , taken_action
     
     return get_value(state, 0, -math.inf, math.inf)
 
@@ -154,19 +196,24 @@ def alphabeta_with_move_ordering(game: Game[S, A], state: S, heuristic: Heuristi
     #TODO: Complete this function
     # NotImplemented()
 
+    # get the turn of the player to start the game
     start_agent = game.get_turn(state)
 
     def get_value(state, depth, alpha, beta):
-
+        
+        # check if this is a terminal state, end the game and return the value of the utility 
         terminal, values = game.is_terminal(state)
-
         if terminal:
             return values[start_agent], None
         
+        # if it is in the maximum depth, return the heuristic value
         if depth == max_depth:
             return heuristic(game, state, start_agent), None
         
+        # get the current player turn 
         agent = game.get_turn(state)
+
+        # if the turn is 0, then it is a max node
         if agent == 0:
             return max_value(state, depth, alpha, beta)
         else:
@@ -175,44 +222,65 @@ def alphabeta_with_move_ordering(game: Game[S, A], state: S, heuristic: Heuristi
 
     def min_value(state, depth, alpha, beta):
 
+        # initiate the min value with positive infinity
         v_min = math.inf
-        correct_action = None
+
+        # initiate the action to take
+        taken_action = None
+
+        # get possible actions and states of the successors for each possible action for the current state
         actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
+        
+        # sort the actions ascendencly based on their heuristic
         actions_states.sort(key = lambda x: heuristic(game, x[1], 0))
 
+        # for each action of the successors, get the value of the successor
         for action , state in actions_states:
             successor_value = get_value(state, depth + 1, alpha, beta)[0]
+            # if the successor_value less or equal than min value, update the min value and the action to take                        
             if successor_value <= v_min: 
                 v_min = successor_value 
-                correct_action = action
-
+                taken_action = action
+            
+            # pruning check: if min value less or equal alpha, then prune the branch
             if v_min <= alpha: 
-                return v_min , correct_action
-
+                return v_min , taken_action
+            
+            # if not so update the beta
             beta = min(beta, v_min)
                 
-        return v_min , correct_action
+        return v_min , taken_action
 
     def max_value(state, depth, alpha, beta):
 
+        # initiate the max value with negative infinity
         v_max = -math.inf
-        correct_action = None
+
+        # initiate the action to take
+        taken_action = None
+
+        # get possible actions and states of the successors for each possible action for the current state
         actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
+        
+        # sort the actions descendengly based on their heuristic
         actions_states.sort(key = lambda x: heuristic(game, x[1], 0), reverse=True)
 
-
+        # for each action of the successors, get the value of the successor
         for action , state in actions_states:
             successor_value = get_value(state, depth + 1, alpha, beta)[0]
+            # if the successor_value more than min value, update the min value and the action to take            
             if successor_value > v_max: 
                 v_max = successor_value 
-                correct_action = action
-
-            if v_max >= beta: 
-                return v_max , correct_action
+                taken_action = action
             
+            # pruning check: if max value more or equal than beta, then prune the branch
+            if v_max >= beta: 
+                return v_max , taken_action
+            
+            # if not so update the alpha            
             alpha = max(alpha, v_max)
 
-        return v_max , correct_action
+        return v_max , taken_action
     
     return get_value(state, 0, -math.inf, math.inf)
 
@@ -223,47 +291,65 @@ def expectimax(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_dep
     #TODO: Complete this function
     # NotImplemented()
 
+    # get the turn of the player to start the game
     start_agent = game.get_turn(state)
 
     def get_value(state, depth):
 
+        # check if this is a terminal state, end the game and return the value of the utility 
         terminal, values = game.is_terminal(state)
-
         if terminal:
             return values[start_agent], None
         
+        # if it is in the maximum depth, return the heuristic value       
         if depth == max_depth:
             return heuristic(game, state, start_agent), None
         
+        # get the current player turn 
         agent = game.get_turn(state)
+
+        # if the turn is 0, then it is a max node
         if agent == 0:
             return max_value(state, depth)
         else:
             return expected_value(state, depth)
         
     def expected_value(state, depth):
-
+        
+        # initiate the expected value with 0
         v_exp = 0
+
+        # get possible actions and states of the successors for each possible action for the current state
         actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
 
-        for _ , state in actions_states:
+        # for each action of the successors, get the value of the successor
+        for action , state in actions_states:
             successor_value = get_value(state, depth + 1)[0]
+
+            # sum the successor values and return their average
             v_exp += successor_value
         return v_exp/len(actions_states), None
 
 
     def max_value(state, depth):
-
+        
+        # initiate the max value with negative infinity
         v_max = -math.inf
-        correct_action = None
+
+        # initiate the action to take
+        taken_action = None
+
+        # get possible actions and states of the successors for each possible action for the current state
         actions_states = [(action, game.get_successor(state, action)) for action in game.get_actions(state)]
 
+        # for each action of the successors, get the value of the successor
         for action , state in actions_states:
             successor_value = get_value(state, depth + 1)[0]
+            # if the successor_value more than min value, update the min value and the action to take
             if successor_value > v_max: 
                 v_max = successor_value 
-                correct_action = action
+                taken_action = action
 
-        return v_max , correct_action
+        return v_max , taken_action
     
     return get_value(state, 0)

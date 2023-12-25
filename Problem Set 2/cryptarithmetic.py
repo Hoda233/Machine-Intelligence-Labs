@@ -53,28 +53,27 @@ class CryptArithmeticProblem(Problem):
         problem.domains = {}
         problem.constraints = []
         
-        # variables 
+        # add unique chars to variables
         all_chars = LHS0 + LHS1 + RHS
+
         unique_chars = set()
         for char in all_chars:
             unique_chars.add(char)
 
         unique_chars = list(unique_chars)
 
-        # carries
-        
+        # add carries to variables
         no_of_carries = len(RHS) - 1
         
         carries = []
         for i in range(no_of_carries):
-            # var = chr(ord('a')+i)
             var = 'C'+str(i)
             carries.append(var)
 
         problem.variables = unique_chars + carries
-        # print(problem.variables)
 
-        # domains 
+        # define the domain of unique chars and carries 
+        # last digits in all sides can't be 0
         last_digits = set()
         last_digits.add(LHS0[0])
         last_digits.add(LHS1[0])
@@ -89,8 +88,6 @@ class CryptArithmeticProblem(Problem):
         for c in carries:
             problem.domains[c] = set(range(0, 2))
         
-        # print(problem.domains)
-
         # constraints 
         
         # all different constraint
@@ -100,7 +97,8 @@ class CryptArithmeticProblem(Problem):
                     binary_constraint = BinaryConstraint((v1,v2), lambda value1, value2:  value1 != value2)
                     problem.constraints.append(binary_constraint)
         
-
+        # reverse the sides 
+        # summing from right
         LHS0_rev = LHS0[::-1]
         LHS1_rev = LHS1[::-1]
         RHS_rev = RHS[::-1]
@@ -109,6 +107,15 @@ class CryptArithmeticProblem(Problem):
         max_length = max(len(LHS0), len(LHS1))
         l0_length, l1_length, r_length = len(LHS0), len(LHS1), len(RHS)
         
+
+        # loop on range of the size of the RHS 
+        # apply the equations as binary constraints
+
+        # combine each of the left side and the right side variables of the equations in tuples as auxiliary variables
+        # define the domain of auxiliary variable as all permutations of its components 
+
+        # constraint the auxiliary variable with its components in binary constraints
+        # apply binary constraint with the final equation
 
         for i in range(r_length): 
             if i == 0:
@@ -138,7 +145,7 @@ class CryptArithmeticProblem(Problem):
                 binary_constraint = BinaryConstraint((LHS1_rev[i],aux1), lambda a, b: a == b[1])
                 problem.constraints.append(binary_constraint)
                 
-                print(RHS_rev[i],aux2,aux2[0],aux2[1])
+                # print(RHS_rev[i],aux2,aux2[0],aux2[1])
                 binary_constraint = BinaryConstraint((RHS_rev[i],aux2), lambda a, b: a == b[0])
                 problem.constraints.append(binary_constraint)
 
